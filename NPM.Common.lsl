@@ -141,7 +141,7 @@ vector adjustHeightToGroundOrWater(){
     llSetRegionPos(vTarget);
     return vTarget;
 }
-list fixVelAndRot(integer habitat){
+list fixVelAndRot(list habitats){
     list toRet=[ZERO_VECTOR, ZERO_ROTATION];
     integer allowedGround=isHabitatAllowed(CFG_MOVE_HABITAT_GROUND);
     integer allowedAir=isHabitatAllowed(CFG_MOVE_HABITAT_AIR);
