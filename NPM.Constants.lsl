@@ -1,0 +1,14 @@
+//// HABITATS /////////////////////////////////////////////////////////////////////////////
+#define CFG_MOVE_HABITAT_GROUND "habitat_ground"
+#define CFG_MOVE_HABITAT_AIR "habitat_air"
+#define CFG_MOVE_HABITAT_WATER "habitat_water"
+//// SHAPES ///////////////////////////////////////////////////////////////////////////////
+#define CFG_MOVE_SHAPE_FREE "shape_free"
+#define CFG_MOVE_SHAPE_SQUARE "shape_square"
+#define CFG_MOVE_SHAPE_CIRCLE "shape_circle"
+#define CFG_MOVE_SHAPE_SPHERE "shape_sphere"
+#define CFG_MOVE_SHAPE_UPPERHEMISPHERE "shape_upperhemisphere"
+#define CFG_MOVE_SHAPE_LOWERHEMISPHERE "shape_lowerhemisphere"
+#define CFG_MOVE_SHAPE_ELIPSOID "shape_elipsoid"
+#define CFG_MOVE_SHAPE_UPPERHEMIELIPSOID "shape_upperhemielipsoid"
+#define CFG_MOVE_SHAPE_LOWERHEMIELIPSOID "shape_lowerhemielipsoid"
