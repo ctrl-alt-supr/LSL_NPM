@@ -3,9 +3,11 @@
     #define NPM_CONSTANTS
     #include "NPM.Constants"
 #endif
+//// DEBUGGING /////////////////////////////////////////////////////////////////////////
+#define DEBUG_ON
 //// MOVEMENT //////////////////////////////////////////////////////////////////////////
 //How far is the task able to get from its home position.
-#define CFG_MOV_DISTANCE 10.0
+#define CFG_MOV_DISTANCE 5.0
 //Stabilishes the strenght this task is deflected by obstacles
 #define CFG_MOV_DEFLECT 1.0
 //How far away to look for parcel/region boundaries
@@ -18,3 +20,5 @@
 #define CFG_MOV_HABITAT CFG_MOVE_HABITAT_GROUND
 //Minimun speed to consider the task stopped.
 #define CFG_MOV_STOPSPEED 0.1
+//Distance to a target to consider it reached.
+#define CFG_MOV_REACHED 0.5

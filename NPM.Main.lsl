@@ -14,6 +14,7 @@ vector gHome=ZERO_VECTOR;
 vector gDestination=ZERO_VECTOR;
 vector gOldPos=ZERO_VECTOR;
 float gLastOld=-1;
+integer gNeedsNextDestination=FALSE;
 
 updateOldPos(){
     if(gOldPos!=llGetPos()){
@@ -21,11 +22,17 @@ updateOldPos(){
         gLastOld=llGetTime();
     }
 }
+checkDestination(){
+    float dis=llVecDist(llGetPos(), gDestination);
+    if(dis<=CFG_MOV_REACHED){
+        gNeedsNextDestination=TRUE;
+    }
+}
 toggleOnOff(){
     gOn = gOn^1;
 }
 
-vector gShape=CFG_MOVE_SHAPE_FREE;
+string gShape=CFG_MOVE_SHAPE_SQUARE;
 integer gOn=FALSE;
 integer gRunning=FALSE;
 
@@ -49,11 +56,20 @@ default{
         }
         if(gRunning){
             updateOldPos();
-            if(llGetTime()-gLastOld>=10){
+            if(llGetTime()-gLastOld>=30){
                 //The task has been stuck in the same position for a while now, make
-                //something about it.
+                //something about it. ToDo: Remove next line!!! 
+                gLastOld=llGetTime();
             }else{
-                list velAndRot=fixVelAndRot([CFG_MOV_HABITAT]);
+                checkDestination();
+                if(gNeedsNextDestination || gDestination==ZERO_VECTOR){
+                    gDestination=getVectorInside(gHome, gShape);
+                    gNeedsNextDestination=FALSE;
+                }
+                //float pos=llGetPos();
+                //llRotLookAt( llRotBetween( <0.0, 1.0, 0.0>, llVecNorm( <gDestination.x, gDestination.y, pos.z> - pos ) ), 1.0, 0.4 );
+                list velAndRot=fixVelAndRot(gDestination, [CFG_MOV_HABITAT]);
+                llOwnerSay((string)llList2Vector(velAndRot,0));
                 startMovement(llGetPos()+llList2Vector(velAndRot,0),llList2Rot(velAndRot,1),1.0);        //start moving and turning 
             }
         }

@@ -125,11 +125,12 @@ performMovement()
 }
 
 vector getVectorInside(vector origin, string shape) {
-    iPos=origin;
+    vector iPos=origin;
     float driftRange = llFrand(CFG_MOV_DISTANCE);
     float a = llFrand(TWO_PI);
     float b = llFrand(TWO_PI);
     float c = llFrand(PI);
+    if(shape == CFG_MOVE_SHAPE_FREE) return ZERO_VECTOR;//(llGetPos()+(<1,0,0>*llGetRot()));
     if(shape == CFG_MOVE_SHAPE_SQUARE) return <iPos.x + driftRange, iPos.y + llFrand(CFG_MOV_DISTANCE), iPos.z>;
     if(shape == CFG_MOVE_SHAPE_CIRCLE) return <iPos.x + driftRange * llCos(a), iPos.y + driftRange * llSin(b), iPos.z>;
     if(shape == CFG_MOVE_SHAPE_SPHERE) return iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(a)>;
@@ -138,6 +139,12 @@ vector getVectorInside(vector origin, string shape) {
     if(shape == CFG_MOVE_SHAPE_ELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(a)>;
     if(shape == CFG_MOVE_SHAPE_UPPERHEMIELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(c)>;
     if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
+    if(iPos==origin){
+        return ZERO_VECTOR;
+    }
+    if(isRestricted(iPos)){
+        return getVectorInside(origin, shape);
+    }
     return iPos;
 }
 integer isHabitatAllowed(string habitat){
@@ -169,12 +176,20 @@ vector adjustHeightToGroundOrWater(){
     llSetRegionPos(vTarget);
     return vTarget;
 }
-list fixVelAndRot(list habitats){
+list fixVelAndRot(vector target, list habitats){
     list toRet=[ZERO_VECTOR, ZERO_ROTATION];
     integer allowedGround=isHabitatAllowed(CFG_MOVE_HABITAT_GROUND);
     integer allowedAir=isHabitatAllowed(CFG_MOVE_HABITAT_AIR);
     integer allowedWater=isHabitatAllowed(CFG_MOVE_HABITAT_WATER);
     integer allowedWaterGround=isHabitatAllowed(CFG_MOVE_HABITAT_WATERGROUND);
+    
+    if(target!=ZERO_VECTOR){
+        if(!allowedAir && !allowedWater){
+            vector p=llGetPos();
+            target.z=p.z;
+        }
+        llSetRot( llRotBetween(<1.0,0.0,0.0>, llVecNorm(target - llGetPos()) ));
+    }
     
     vector pos=llGetPos();       //get my current position
     rotation rot=llGetRot();       //and rotation
@@ -188,6 +203,9 @@ list fixVelAndRot(list habitats){
            pos=adjustHeightToGround();
        }
     }
+    //if(target==ZERO_VECTOR){
+    //    targetRot=rot;
+    //}
     vector vel=<1,0,0>*rot;      //use my direction as velocity
 
         //here are the RULES that give this critter behavior:
