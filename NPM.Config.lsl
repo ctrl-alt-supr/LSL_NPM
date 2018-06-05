@@ -11,7 +11,7 @@
 //How far away to look for parcel/region boundaries
 #define CFG_MOV_LOOKAHEAD_BOUNDS 3.0
 //How far away to look for ground collisions
-#define CFG_MOV_LOOKAHEAD_GROUND 1.0
+#define CFG_MOV_LOOKAHEAD_GROUND 0.1
 //Maximun height the task is allowed to be over the ground/water level
 #define CFG_MOV_MAXHEIGHT 1.0
 //Sets the places this task is able to move on

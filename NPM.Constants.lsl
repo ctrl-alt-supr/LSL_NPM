@@ -2,6 +2,7 @@
 #define CFG_MOVE_HABITAT_GROUND "habitat_ground"
 #define CFG_MOVE_HABITAT_AIR "habitat_air"
 #define CFG_MOVE_HABITAT_WATER "habitat_water"
+#define CFG_MOVE_HABITAT_WATERGROUND "habitat_waterground"
 //// SHAPES ///////////////////////////////////////////////////////////////////////////////
 #define CFG_MOVE_SHAPE_FREE "shape_free"
 #define CFG_MOVE_SHAPE_SQUARE "shape_square"

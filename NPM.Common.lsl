@@ -16,33 +16,61 @@ integer     SF_target=-1;       //handle of last target position
 integer isRestricted(vector pos){
     //Check if pos is out of simulator bounds.
     if (pos.x<=0 || pos.x>=256 || pos.y<=0 || pos.y>=256)
-        return FALSE;
+        return TRUE;
     //Check if pos is above groud.
     if (pos.z<llGround(pos-llGetPos()))
-        return FALSE;    
+        return TRUE;    
     //Check if pos is still in the same parcel as the one task is in right now.      
     key curpar = llList2Key(llGetParcelDetails(llGetPos(),[PARCEL_DETAILS_ID]),0);
     key nxtpar = llList2Key(llGetParcelDetails(pos,       [PARCEL_DETAILS_ID]),0);
     if (curpar!=nxtpar)
-        return FALSE;
+        return TRUE;
         
-    integer allowedGround=isHabitatAllowed(CFG_MOVE_HABITAT_GROUND);
-    integer allowedAir=isHabitatAllowed(CFG_MOVE_HABITAT_AIR);
-    integer allowedWater=isHabitatAllowed(CFG_MOVE_HABITAT_WATER);
-    if(!allowedAir){
-        float gnd=llGround(ZERO_VECTOR);
-        float wtr=llWater(ZERO_VECTOR);
-        if(allowedGround && !allowedWater){
-            
-        }if(allowedWater && !allowedGround){
-            
+    
+    return FALSE;
+}
+float distanceToGround(){
+    float gnd=llGround(ZERO_VECTOR);
+    vector cPos=llGetPos();
+    float distanceToGround=cPos.z - gnd;
+    return distanceToGround;
+}
+integer canHabitatBeHere(){
+    if(distanceToGround()<=1000){
+        integer allowedGround=isHabitatAllowed(CFG_MOVE_HABITAT_GROUND);
+        integer allowedAir=isHabitatAllowed(CFG_MOVE_HABITAT_AIR);
+        integer allowedWater=isHabitatAllowed(CFG_MOVE_HABITAT_WATER);
+        integer allowedWaterGround=isHabitatAllowed(CFG_MOVE_HABITAT_WATERGROUND);
+        if(!allowedAir){
+            float gnd=llGround(ZERO_VECTOR);
+            float wat=llWater(ZERO_VECTOR);
+            if(allowedGround && !allowedWater && !allowedWaterGround){          //Can move on ground only
+                if(wat>gnd){    //If the water level is higher than the ground level, it means we are in an area filled with water and we shouldn't be here
+                    return FALSE;
+                }
+            }else if(!allowedGround && allowedWater && !allowedWaterGround){    //Can move on water only
+                if(gnd>wat){    //If the ground level is higher than the water level, it means we are in a dry area and we shouldn't be here
+                    return FALSE;
+                }
+            }else if(allowedGround && !allowedWater && allowedWaterGround){     //Can move on ground or underwater ground
+                
+            }else if(!allowedGround && allowedWater && allowedWaterGround){     //Can move on water or underwater ground
+                if(gnd>wat){    //If the ground level is higher than the water level, it means we are in a dry area and we shouldn't be here
+                    return FALSE;
+                }
+            }else if(!allowedGround && !allowedWater && allowedWaterGround){    //Can move on underwater ground only
+                if(gnd>wat){    //If the ground level is higher than the water level, it means we are in a dry area and we shouldn't be here
+                    return FALSE;
+                }
+            }else if(allowedGround && allowedWater && !allowedWaterGround){     //Can move on ground or water
+                
+            }
         }
     }
-    return TRUE;
 }
 
 //Starts moving towards a position with a rotation
-startMovement(vector pos,rotation rot, float seconds)
+startMovement(vector pos, rotation rot, float seconds)
 {
     //record the current position, rotation and time
     SF_spos=llGetPos();
@@ -112,7 +140,7 @@ vector getVectorInside(vector origin, string shape) {
     if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
     return iPos;
 }
-list isHabitatAllowed(string habitat){
+integer isHabitatAllowed(string habitat){
     list allowedHabitats=[CFG_MOV_HABITAT];
     integer foundGround=llListFindList(allowedHabitats,[habitat]);
     return (foundGround>-1);
@@ -146,17 +174,19 @@ list fixVelAndRot(list habitats){
     integer allowedGround=isHabitatAllowed(CFG_MOVE_HABITAT_GROUND);
     integer allowedAir=isHabitatAllowed(CFG_MOVE_HABITAT_AIR);
     integer allowedWater=isHabitatAllowed(CFG_MOVE_HABITAT_WATER);
+    integer allowedWaterGround=isHabitatAllowed(CFG_MOVE_HABITAT_WATERGROUND);
     
     vector pos=llGetPos();       //get my current position
     rotation rot=llGetRot();       //and rotation
-
-    if(!allowedAir && !allowedWater){
-        //If the task should be always grounded, we try to mantain all rotations but the z at 0, so no extrange spins are
-        //performed
-        rot=<0.0,0.0,rot.z,rot.s>;
-        llSetRot(rot);
-        //The position is adjusted so the task touches the ground in this case
-        pos=adjustHeightToGround();
+    if(distanceToGround()<=1000){
+       if(!allowedAir && !allowedWater){
+           //If the task should be always grounded, we try to mantain all rotations but the z at 0, so no extrange spins are
+           //performed
+           rot=<0.0,0.0,rot.z,rot.s>;
+           llSetRot(rot);
+           //The position is adjusted so the task touches the ground in this case
+           pos=adjustHeightToGround();
+       }
     }
     vector vel=<1,0,0>*rot;      //use my direction as velocity
 
@@ -168,20 +198,24 @@ list fixVelAndRot(list habitats){
     if (isRestricted(pos+CFG_MOV_LOOKAHEAD_BOUNDS*xvel))     //so you can pong off the edges of the sim
     {
         vel -= CFG_MOV_DEFLECT*xvel;    //slow down as you approach X edge.
+        llOwnerSay("I'm too close to the X+ edge");
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos-CFG_MOV_LOOKAHEAD_BOUNDS*xvel))   //checking both sides makes me
     {
         vel += CFG_MOV_DEFLECT*xvel;         //accelerate away from walls
+        llOwnerSay("I'm too close to the X- edge");
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos+CFG_MOV_LOOKAHEAD_BOUNDS*yvel))     //do the same thing in Y
     {
         vel -= CFG_MOV_DEFLECT*yvel;
+        llOwnerSay("I'm too close to the Y+ edge");
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos-CFG_MOV_LOOKAHEAD_BOUNDS*yvel)){
         vel += CFG_MOV_DEFLECT*yvel;
+        llOwnerSay("I'm too close to the Y- edge");
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
         
@@ -190,26 +224,30 @@ list fixVelAndRot(list habitats){
         //ground below) but I thought it would be fun to allow this flyer to hit the
         //water and THEN accelerate it up to fly back out.
     float wat=llWater(ZERO_VECTOR);
-    if (pos.z<wat)         //after I have already dipped into the water,
+    if (pos.z<wat){         //after I have already dipped into the water,
         vel += <0,0,1>*CFG_MOV_DEFLECT;             //accelerate back up
-    
+        llOwnerSay("I'm too close to the water");
+    }
         //if you don't have some sort of CFG_MOV_MAXHEIGHT test, the critter would fly up
         //and never come back. I turn back at CFG_MOV_MAXHEIGHT above the land OR water.
         //(if you just tested land, you would have trouble when the water was
         //over CFG_MOV_MAXHEIGHT deep)
     float gnd=llGround(ZERO_VECTOR);
-    if (gnd>wat)
+    if (gnd>wat){
         wat=gnd;        //use the max of water and ground for height limit test
-    if (pos.z>(wat+CFG_MOV_MAXHEIGHT))  //if I get too high
+    }
+    if (pos.z>(wat+CFG_MOV_MAXHEIGHT)){  //if I get too high
         vel -= <0,0,1>*CFG_MOV_DEFLECT;     //accelerate back down
-
+        llOwnerSay("I'm too high");
+    }
         //When the critter gets within LOOKAHEAD meters of the ground, I start
         //accelerating back up. Using the ground normal makes it turn sideways
         //away from cliffs instead of just turning up.
     vector npos=pos+vel;        //next position
-    if ((npos.z-LOOKAHEAD)<gnd)     //if my next position is too close to the ground
+    if ((npos.z-CFG_MOV_LOOKAHEAD_GROUND)<gnd){     //if my next position is too close to the ground
         vel += llGroundNormal(vel)*CFG_MOV_DEFLECT;     //CFG_MOV_DEFLECT away from the ground normal
-
+        llOwnerSay("I'm too close to ground");
+    }
         //I'm limiting this critter to 1 meter per second, you could go faster
         //but beware, llAxes2Rot requires unit vectors! You would have to
         //calculate a separate vector that is the normalized velocity and use that below.

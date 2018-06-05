@@ -16,10 +16,13 @@ vector gOldPos=ZERO_VECTOR;
 float gLastOld=-1;
 
 updateOldPos(){
-    if(gOldPos!=llGetPos){
+    if(gOldPos!=llGetPos()){
         gOldPos=llGetPos();
         gLastOld=llGetTime();
     }
+}
+toggleOnOff(){
+    gOn = gOn^1;
 }
 
 vector gShape=CFG_MOVE_SHAPE_FREE;
@@ -50,13 +53,13 @@ default{
                 //The task has been stuck in the same position for a while now, make
                 //something about it.
             }else{
-                fixVelAndRot([CFG_MOV_HABITAT]);
-                startMovement(pos+vel,rot,1.0);        //start moving and turning 
+                list velAndRot=fixVelAndRot([CFG_MOV_HABITAT]);
+                startMovement(llGetPos()+llList2Vector(velAndRot,0),llList2Rot(velAndRot,1),1.0);        //start moving and turning 
             }
         }
     }       
     touch_start(integer num){
-        gOn = gOn^1;
+        toggleOnOff();
     }
     not_at_target(){
         performMovement();
