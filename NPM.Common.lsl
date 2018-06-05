@@ -1,7 +1,7 @@
 
-#ifndef PET_CONSTANTS
-    #define PET_CONSTANTS
-    #include "Pet.Constants"
+#ifndef NPM_CONSTANTS
+    #define NPM_CONSTANTS
+    #include "NPM.Constants"
 #endif
 //Variables used for the interpolation of position and rotation:
 vector      SF_spos;            //start position

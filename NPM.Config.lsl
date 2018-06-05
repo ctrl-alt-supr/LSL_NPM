@@ -1,7 +1,7 @@
 
-#ifndef PET_CONSTANTS
-    #define PET_CONSTANTS
-    #include "Pet.Constants"
+#ifndef NPM_CONSTANTS
+    #define NPM_CONSTANTS
+    #include "NPM.Constants"
 #endif
 //// MOVEMENT //////////////////////////////////////////////////////////////////////////
 //How far is the task able to get from its home position.
@@ -16,7 +16,5 @@
 #define CFG_MOV_MAXHEIGHT 1.0
 //Sets the places this task is able to move on
 #define CFG_MOV_HABITAT CFG_MOVE_HABITAT_GROUND
-
-
-
-//// STATS /////////////////////////////////////////////////////////////////////////////
+//Minimun speed to consider the task stopped.
+#define CFG_MOV_STOPSPEED 0.1
