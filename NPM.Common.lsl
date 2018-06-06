@@ -124,6 +124,17 @@ performMovement()
         llSetLinkPrimitiveParamsFast(LINK_THIS,[PRIM_POSITION,pos,PRIM_ROTATION,rot]);
 }
 
+checkRayFront(){
+    vector pos =llGetPos();
+    vector tar=pos+<1.0,0,0>*llGetRot();
+    list results = llCastRay(pos, tar, [RC_REJECT_TYPES, RC_REJECT_LAND, RC_MAX_HITS, 4, RC_DATA_FLAGS, RC_GET_ROOT_KEY] );
+    llOwnerSay("pos. "+(string)pos+"  tar: "+(string)tar);
+    if(llGetListLength(results)>1){
+        llOwnerSay(llList2String(results,0));
+        //llOwnerSay("There is a blocker in front of me! kkk "+(string)llKey2Name(llList2Key(results,0)));
+    }
+}
+
 vector getVectorInside(vector origin, string shape) {
     vector iPos=origin;
     float driftRange = llFrand(CFG_MOV_DISTANCE);
@@ -131,15 +142,24 @@ vector getVectorInside(vector origin, string shape) {
     float b = llFrand(TWO_PI);
     float c = llFrand(PI);
     vector toRet=ZERO_VECTOR;
-    if(shape == CFG_MOVE_SHAPE_FREE){ toRet=ZERO_VECTOR;//(llGetPos()+(<1,0,0>*llGetRot()));
-    }else if(shape == CFG_MOVE_SHAPE_SQUARE){ toRet = <iPos.x + driftRange, iPos.y + llFrand(CFG_MOV_DISTANCE), iPos.z>;
-    }else if(shape == CFG_MOVE_SHAPE_CIRCLE){ toRet = <iPos.x + driftRange * llCos(a), iPos.y + driftRange * llSin(b), iPos.z>;
-    }else if(shape == CFG_MOVE_SHAPE_SPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(a)>;
-    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMISPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(c)>;
-    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMISPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), -driftRange * llSin(c)>;
-    }else if(shape == CFG_MOVE_SHAPE_ELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(a)>;
-    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMIELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(c)>;
-    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
+    if(shape == CFG_MOVE_SHAPE_FREE){ 
+        toRet=ZERO_VECTOR; //(llGetPos()+(<1,0,0>*llGetRot()));
+    }else if(shape == CFG_MOVE_SHAPE_SQUARE){ 
+        toRet = <iPos.x + driftRange, iPos.y + llFrand(CFG_MOV_DISTANCE), iPos.z>;
+    }else if(shape == CFG_MOVE_SHAPE_CIRCLE){ 
+        toRet = <iPos.x + driftRange * llCos(a), iPos.y + driftRange * llSin(b), iPos.z>;
+    }else if(shape == CFG_MOVE_SHAPE_SPHERE){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(a)>;
+    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMISPHERE){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMISPHERE){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), -driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_ELIPSOID){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(a)>;
+    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMIELIPSOID){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID){ 
+        toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
     }
     // if(iPos==origin){
     //     return ZERO_VECTOR;
@@ -298,6 +318,8 @@ list fixVelAndRot(vector target, list habitats){
         rot = llAxes2Rot(vel,lft,vel%lft);      //re-calc the rotation
         vel=ZERO_VECTOR;            //stop and wait for rotation to turn me
     }
+    
+    checkRayFront();
 
     toRet=[vel, rot];
     return toRet;

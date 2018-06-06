@@ -17,6 +17,8 @@ float gLastOld=-1;
 integer gNeedsNextDestination=FALSE;
 integer gFailedMovements=0;
 
+
+
 updateOldPos(){
     if(gOldPos!=llGetPos()){
         gOldPos=llGetPos();
