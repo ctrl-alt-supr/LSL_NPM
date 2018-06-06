@@ -130,22 +130,24 @@ vector getVectorInside(vector origin, string shape) {
     float a = llFrand(TWO_PI);
     float b = llFrand(TWO_PI);
     float c = llFrand(PI);
-    if(shape == CFG_MOVE_SHAPE_FREE) return ZERO_VECTOR;//(llGetPos()+(<1,0,0>*llGetRot()));
-    if(shape == CFG_MOVE_SHAPE_SQUARE) return <iPos.x + driftRange, iPos.y + llFrand(CFG_MOV_DISTANCE), iPos.z>;
-    if(shape == CFG_MOVE_SHAPE_CIRCLE) return <iPos.x + driftRange * llCos(a), iPos.y + driftRange * llSin(b), iPos.z>;
-    if(shape == CFG_MOVE_SHAPE_SPHERE) return iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(a)>;
-    if(shape == CFG_MOVE_SHAPE_UPPERHEMISPHERE) return iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(c)>;
-    if(shape == CFG_MOVE_SHAPE_LOWERHEMISPHERE) return iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), -driftRange * llSin(c)>;
-    if(shape == CFG_MOVE_SHAPE_ELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(a)>;
-    if(shape == CFG_MOVE_SHAPE_UPPERHEMIELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(c)>;
-    if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID) return iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
-    if(iPos==origin){
-        return ZERO_VECTOR;
+    vector toRet=ZERO_VECTOR;
+    if(shape == CFG_MOVE_SHAPE_FREE){ toRet=ZERO_VECTOR;//(llGetPos()+(<1,0,0>*llGetRot()));
+    }else if(shape == CFG_MOVE_SHAPE_SQUARE){ toRet = <iPos.x + driftRange, iPos.y + llFrand(CFG_MOV_DISTANCE), iPos.z>;
+    }else if(shape == CFG_MOVE_SHAPE_CIRCLE){ toRet = <iPos.x + driftRange * llCos(a), iPos.y + driftRange * llSin(b), iPos.z>;
+    }else if(shape == CFG_MOVE_SHAPE_SPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(a)>;
+    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMISPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMISPHERE){ toRet = iPos + <driftRange * llCos(a) * llCos(b), driftRange * llCos(a) * llSin(b), -driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_ELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(a)>;
+    }else if(shape == CFG_MOVE_SHAPE_UPPERHEMIELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), driftRange * llSin(c)>;
+    }else if(shape == CFG_MOVE_SHAPE_LOWERHEMIELIPSOID){ toRet = iPos + <driftRange * llCos(a) * llCos(b), llFrand(CFG_MOV_DISTANCE) * llCos(a) * llSin(b), -driftRange * llSin(c)>;
     }
-    if(isRestricted(iPos)){
+    // if(iPos==origin){
+    //     return ZERO_VECTOR;
+    // }
+    if(isRestricted(toRet)){
         return getVectorInside(origin, shape);
     }
-    return iPos;
+    return toRet;
 }
 integer isHabitatAllowed(string habitat){
     list allowedHabitats=[CFG_MOV_HABITAT];
@@ -217,23 +219,27 @@ list fixVelAndRot(vector target, list habitats){
     {
         vel -= CFG_MOV_DEFLECT*xvel;    //slow down as you approach X edge.
         llOwnerSay("I'm too close to the X+ edge");
+        gFailedMovements++;
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos-CFG_MOV_LOOKAHEAD_BOUNDS*xvel))   //checking both sides makes me
     {
         vel += CFG_MOV_DEFLECT*xvel;         //accelerate away from walls
         llOwnerSay("I'm too close to the X- edge");
+        gFailedMovements++;
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos+CFG_MOV_LOOKAHEAD_BOUNDS*yvel))     //do the same thing in Y
     {
         vel -= CFG_MOV_DEFLECT*yvel;
         llOwnerSay("I'm too close to the Y+ edge");
+        gFailedMovements++;
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
     if (isRestricted(pos-CFG_MOV_LOOKAHEAD_BOUNDS*yvel)){
         vel += CFG_MOV_DEFLECT*yvel;
         llOwnerSay("I'm too close to the Y- edge");
+        gFailedMovements++;
         //llSetRot(llGetRot() * llEuler2Rot(<0,0,90 * flag * DEG_TO_RAD>));
     }
         
@@ -245,6 +251,7 @@ list fixVelAndRot(vector target, list habitats){
     if (pos.z<wat){         //after I have already dipped into the water,
         vel += <0,0,1>*CFG_MOV_DEFLECT;             //accelerate back up
         llOwnerSay("I'm too close to the water");
+        gFailedMovements++;
     }
         //if you don't have some sort of CFG_MOV_MAXHEIGHT test, the critter would fly up
         //and never come back. I turn back at CFG_MOV_MAXHEIGHT above the land OR water.
@@ -257,6 +264,7 @@ list fixVelAndRot(vector target, list habitats){
     if (pos.z>(wat+CFG_MOV_MAXHEIGHT)){  //if I get too high
         vel -= <0,0,1>*CFG_MOV_DEFLECT;     //accelerate back down
         llOwnerSay("I'm too high");
+        gFailedMovements++;
     }
         //When the critter gets within LOOKAHEAD meters of the ground, I start
         //accelerating back up. Using the ground normal makes it turn sideways
@@ -265,6 +273,7 @@ list fixVelAndRot(vector target, list habitats){
     if ((npos.z-CFG_MOV_LOOKAHEAD_GROUND)<gnd){     //if my next position is too close to the ground
         vel += llGroundNormal(vel)*CFG_MOV_DEFLECT;     //CFG_MOV_DEFLECT away from the ground normal
         llOwnerSay("I'm too close to ground");
+        gFailedMovements++;
     }
         //I'm limiting this critter to 1 meter per second, you could go faster
         //but beware, llAxes2Rot requires unit vectors! You would have to

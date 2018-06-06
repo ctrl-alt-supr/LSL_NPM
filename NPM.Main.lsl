@@ -15,6 +15,7 @@ vector gDestination=ZERO_VECTOR;
 vector gOldPos=ZERO_VECTOR;
 float gLastOld=-1;
 integer gNeedsNextDestination=FALSE;
+integer gFailedMovements=0;
 
 updateOldPos(){
     if(gOldPos!=llGetPos()){
@@ -25,6 +26,10 @@ updateOldPos(){
 checkDestination(){
     float dis=llVecDist(llGetPos(), gDestination);
     if(dis<=CFG_MOV_REACHED){
+        gNeedsNextDestination=TRUE;
+    }else if(gFailedMovements>5){
+        llOwnerSay("Too many movement failures, changing route");
+        gFailedMovements=0;
         gNeedsNextDestination=TRUE;
     }
 }
@@ -56,14 +61,16 @@ default{
         }
         if(gRunning){
             updateOldPos();
-            if(llGetTime()-gLastOld>=30){
+            if(llGetTime()-gLastOld>=10){
                 //The task has been stuck in the same position for a while now, make
                 //something about it. ToDo: Remove next line!!! 
-                gLastOld=llGetTime();
+                //gLastOld=llGetTime();
+                gNeedsNextDestination=TRUE;
             }else{
                 checkDestination();
                 if(gNeedsNextDestination || gDestination==ZERO_VECTOR){
                     gDestination=getVectorInside(gHome, gShape);
+                    gFailedMovements=0;
                     gNeedsNextDestination=FALSE;
                 }
                 //float pos=llGetPos();
